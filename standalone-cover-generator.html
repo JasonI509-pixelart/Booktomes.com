@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Children's Book Cover Generator - High Graphics</title>
+  <style>
+    :root {
+      --bg-cream: #faf7f2;
+      --card-bg: #ffffff;
+      --border-color: #e5ded4;
+      --text-main: #2b2621;
+      --text-muted: #78716c;
+      --accent-orange: #f97316;
+      --accent-orange-hover: #ea580c;
+      --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      --shadow-frame: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 600px;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .main-layout {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .control-panel {
+      background: var(--card-bg);
+      padding: 28px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-color);
+      background-color: var(--bg-cream);
+      font-size: 0.95rem;
+      color: var(--text-main);
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent-orange);
+      background-color: #ffffff;
+    }
+
+    .btn-generate {
+      background-color: var(--accent-orange);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn-generate:hover {
+      background-color: var(--accent-orange-hover);
+    }
+
+    .btn-generate:active {
+      transform: scale(0.98);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .cover-frame {
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 3 / 4;
+      background-color: #ede8e1;
+      border-radius: 16px;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .placeholder-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 20px;
+      font-size: 0.9rem;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(250, 247, 242, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e5ded4;
+      border-top-color: var(--accent-orange);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .download-action {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-orange);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 18px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      box-shadow: var(--shadow-soft);
+      transition: all 0.2s;
+    }
+
+    .download-action:hover {
+      background: var(--accent-orange);
+      color: white;
+      border-color: var(--accent-orange);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Children's Book Cover Generator</h1>
+      <p class="subtitle">Turn your story ideas into high-graphics vintage watercolor book covers instantly.</p>
+    </header>
+
+    <div class="main-layout">
+      <!-- Input Controls -->
+      <div class="control-panel">
+        <div>
+          <label for="conceptInput">Story Concept or Title Description</label>
+          <textarea 
+            id="conceptInput" 
+            placeholder="e.g. A young boy with brown hair and his pet owl discovering an enchanted treehouse in the woods..."
+          >The Midnight Typist and the Tomorrow Ledger, a 10-year-old boy named Barnaby with brown hair finding a magical glowing antique typewriter in an attic</textarea>
+        </div>
+
+        <button id="generateBtn" class="btn-generate">
+          <span>Generate Book Cover</span>
+        </button>
+      </div>
+
+      <!-- Result Frame -->
+      <div class="preview-panel">
+        <div class="cover-frame" id="coverFrame">
+          <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Painting High-Graphics Canvas...</span>
+          </div>
+
+          <div class="placeholder-state" id="placeholderText">
+            Click "Generate Book Cover" to create your 768×1024 illustration.
+          </div>
+
+          <img 
+            id="coverImage" 
+            alt="Unlimited Free High Graphics Book Cover Generator" 
+            style="width: 100%; max-width: 450px; height: auto; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
+          />
+        </div>
+
+        <a id="downloadLink" href="#" download="childrens_book_cover.jpg" class="download-action">
+          <span>⬇ Download Book Cover</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const EXACT_ART_DIRECTION = "Children's book cover illustration art, vintage storybook style, detailed watercolor wash, intricate colored pencil shading and cross-hatching, fine ink outlines, textured cream paper background, whimsical and highly detailed, vibrant yet nostalgic color palette, high graphics, masterpieces graphics";
+
+    const conceptInput = document.getElementById('conceptInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const coverImage = document.getElementById('coverImage');
+    const coverFrame = document.getElementById('coverFrame');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const placeholderText = document.getElementById('placeholderText');
+    const downloadLink = document.getElementById('downloadLink');
+
+    function buildCoverUrl(userInput) {
+      const fullPrompt = `${userInput.trim()}. ${EXACT_ART_DIRECTION}`;
+      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const seed = Math.floor(Math.random() * 90000000) + 10000000;
+      // High-fidelity image routing endpoint with flux model and enhance=true
+      return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&model=flux&enhance=true&seed=${seed}&nologo=true`;
+    }
+
+    async function handleGenerate() {
+      const input = conceptInput.value.trim();
+      if (!input) return;
+
+      generateBtn.disabled = true;
+      loadingOverlay.style.display = 'flex';
+      downloadLink.style.display = 'none';
+
+      const targetUrl = buildCoverUrl(input);
+
+      try {
+        // Preload image in memory to ensure smooth render
+        await new Promise((resolve, reject) => {
+          const tempImg = new Image();
+          tempImg.onload = resolve;
+          tempImg.onerror = reject;
+          tempImg.src = targetUrl;
+        });
+
+        // Set verified image
+        coverImage.src = targetUrl;
+        coverImage.style.display = 'block';
+        placeholderText.style.display = 'none';
+
+        // Prepare download
+        downloadLink.href = targetUrl;
+        downloadLink.style.display = 'inline-flex';
+      } catch (err) {
+        console.error('Image generation error:', err);
+        // Fallback direct source render
+        coverImage.src = targetUrl;
+        coverImage.style.display = 'block';
+        placeholderText.style.display = 'none';
+        downloadLink.href = targetUrl;
+        downloadLink.style.display = 'inline-flex';
+      } finally {
+        generateBtn.disabled = false;
+        loadingOverlay.style.display = 'none';
+      }
+    }
+
+    generateBtn.addEventListener('click', handleGenerate);
+
+    // Download handler via blob for cross-origin compliance
+    downloadLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(coverImage.src);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'childrens_book_cover_768x1024.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        window.open(coverImage.src, '_blank');
+      }
+    });
+  </script>
+</body>
+</html>
